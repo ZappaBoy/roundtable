@@ -4,11 +4,12 @@ from argparse import Namespace
 
 __version__ = metadata.version(__package__ or __name__)
 
-from example_tool.models.log_level import LogLevel
-from example_tool.shared.utils.logger import Logger
+from roundtable.models.log_level import LogLevel
+from roundtable.services.meeting import Meeting
+from roundtable.shared.utils.logger import Logger
 
 
-class ExampleTool:
+class Roundtable:
     def __init__(self):
         self.logger = Logger()
         self.args = self.parse_args()
@@ -18,8 +19,9 @@ class ExampleTool:
         self.check_args()
         self.logger.info(f"Running...")
         self.logger.debug(self.args)
-        self.logger.info("Implement your tool logic here. Have fun!")
-        self.logger.info("Created by ZappaBoy")
+        meeting = Meeting()
+        if self.args.cli:
+            meeting.start_meeting()
 
     @staticmethod
     def parse_args() -> Namespace:
@@ -32,6 +34,8 @@ class ExampleTool:
                             required=False, help='Do not print any output/log')
         parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}',
                             help='Show version and exit.')
+        parser.add_argument('--cli', action='store_true', default=True,
+                            help='Run the tool in CLI mode.')
         return parser.parse_args()
 
     def check_args(self) -> None:

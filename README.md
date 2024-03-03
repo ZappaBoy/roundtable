@@ -1,6 +1,6 @@
-# example_tool
+# roundtable
 
-`example_tool` is a template repository to build Python CLI tool.
+`roundtable` is a tool that simulates a roundtable discussion using AI agents.
 
 ## Installation
 
@@ -16,23 +16,23 @@ poetry install
 You can run the tool using poetry:
 
 ``` shell
-poetry run example_tool --help
+poetry run roundtable --help
 ```
 
 Or you can run the tool using python:
 
 ``` shell
-python -m example_tool --help
+python -m roundtable --help
 ```
 
 Or you can run the tool directly from the directory or add it to your path:
 
 ``` shell
-example_tool --help
+roundtable --help
 ```
 
 ```shell
-usage: example_tool [-h] [--verbose] [--debug] [--quiet | --no-quiet | -q] [--version]
+usage: roundtable [-h] [--verbose] [--debug] [--quiet | --no-quiet | -q] [--version] [--cli]
 
 This is a template repository to build Python CLI tool.
 
@@ -43,7 +43,7 @@ options:
   --quiet, --no-quiet, -q
                         Do not print any output/log
   --version             Show version and exit.
-
+  --cli                 Run the tool in CLI mode.
 ```
 
 ## Development
