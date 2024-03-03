@@ -1,4 +1,3 @@
-from roundtable.shared.utils.configurator import Configurator
 from roundtable.shared.utils.logger import Logger
 
 
@@ -9,10 +8,6 @@ class Meeting:
     def start_meeting(self):
         self.logger.info("Meeting started")
         running = True
-
-        configurator = Configurator.instance().get_settings()
-        print(configurator)
-
         while running:
             user_input = input("Enter text (press 'q' or ctrl-c to quit): ")
             if user_input.lower() == 'q':

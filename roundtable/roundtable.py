@@ -4,6 +4,7 @@ from argparse import Namespace
 
 __version__ = metadata.version(__package__ or __name__)
 
+from roundtable.gui.gui import GUI
 from roundtable.models.log_level import LogLevel
 from roundtable.services.meeting import Meeting
 from roundtable.shared.utils.logger import Logger
@@ -20,8 +21,12 @@ class Roundtable:
         self.logger.info(f"Running...")
         self.logger.debug(self.args)
         meeting = Meeting()
+        if self.args.gui:
+            gui = GUI()
+            gui.show()
         if self.args.cli:
             meeting.start_meeting()
+
 
     @staticmethod
     def parse_args() -> Namespace:
@@ -34,13 +39,18 @@ class Roundtable:
                             required=False, help='Do not print any output/log')
         parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}',
                             help='Show version and exit.')
-        parser.add_argument('--cli', action='store_true', default=True,
+        parser.add_argument('--cli', action='store_true', default=False,
                             help='Run the tool in CLI mode.')
+        parser.add_argument('--gui', action='store_true', default=False,
+                            help='Run the tool in GUI mode.')
         return parser.parse_args()
 
     def check_args(self) -> None:
         error_message = ""
-        # Add arguments checks here
+
+        if not self.args.cli and not self.args.gui:
+            error_message += "You must select at least one mode (--cli or --gui). "
+
         if error_message != "":
             self.logger.error(error_message)
             exit(1)
