@@ -6,7 +6,7 @@ __version__ = metadata.version(__package__ or __name__)
 
 from roundtable.gui.gui import GUI
 from roundtable.models.log_level import LogLevel
-from roundtable.services.meeting import Meeting
+from roundtable.services.meeting.meeting import Meeting
 from roundtable.shared.utils.logger import Logger
 
 

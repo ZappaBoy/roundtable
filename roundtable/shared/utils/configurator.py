@@ -19,3 +19,11 @@ class Configurator:
 
     def get_settings(self) -> Settings:
         return self._settings
+
+    def get_llm_model(self) -> str:
+        return self._settings.llm_model
+
+    def is_openai_api_key_set(self) -> bool:
+        if self._settings.openai_api_key is not None:
+            return len(self._settings.openai_api_key) > 0
+        return False

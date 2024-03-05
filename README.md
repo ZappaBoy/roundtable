@@ -11,6 +11,12 @@ dependencies simply run:
 poetry install
 ```
 
+### Using ollama
+
+```shell
+ollama pull 'your_model'
+```
+
 ## Usage
 
 You can run the tool using poetry:
