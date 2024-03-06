@@ -11,9 +11,7 @@ class Settings(BaseSettings):
     environment: Environment = Environment.DEVELOPMENT
     log_level: LogLevel = LogLevel.DEBUG
     langchain_project = "Roundtable"
-    openai_api_key: str
     langchain_api_key: str
-    tavily_api_key: str
     langchain_tracing_v2: bool = True
     llm_model: str = 'openhermes'
 

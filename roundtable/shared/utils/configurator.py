@@ -1,3 +1,5 @@
+from langchain.globals import set_debug, set_verbose
+
 from roundtable.models.log_level import LogLevel
 from roundtable.models.settings.environment import Environment
 from roundtable.models.settings.settings import Settings
@@ -15,6 +17,8 @@ class Configurator:
         return self._settings.environment == Environment.PRODUCTION
 
     def is_debug_enabled(self) -> bool:
+        set_debug(True)
+        set_verbose(True)
         return self._settings.log_level == LogLevel.DEBUG
 
     def get_settings(self) -> Settings:
@@ -22,8 +26,3 @@ class Configurator:
 
     def get_llm_model(self) -> str:
         return self._settings.llm_model
-
-    def is_openai_api_key_set(self) -> bool:
-        if self._settings.openai_api_key is not None:
-            return len(self._settings.openai_api_key) > 0
-        return False
