@@ -1,5 +1,6 @@
-from langchain_community.chat_models import ChatOllama
+
 from langchain_core.messages import HumanMessage
+from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
@@ -19,12 +20,12 @@ class Meeting:
         if self.is_openai_api_key_set:
             self.llm = ChatOpenAI(model=llm_model)
         else:
-            self.llm = ChatOllama(model=llm_model)
-        self.super_graph = None
+            self.llm = OllamaFunctions(model=llm_model)
+        self.meeting_chain = None
         self.research_team = ResearchTeam(self.llm)
         self.authoring_team = AuthoringTeam(self.llm)
 
-    def build_meeting(self):
+    def build_team(self):
         supervisor_node = AgentsManager.create_team_supervisor(
             self.llm,
             "You are a supervisor tasked with managing a conversation between the"
@@ -60,18 +61,19 @@ class Meeting:
             },
         )
         super_graph.set_entry_point("supervisor")
-        self.super_graph = super_graph.compile()
+        self.meeting_chain = super_graph.compile()
+
 
     def start_meeting(self):
         self.logger.info("Meeting started")
-        self.build_meeting()
+        self.build_team()
         running = True
         while running:
             user_input = input("Enter text (press 'q' or ctrl-c to quit): ")
             if user_input.lower() == 'q':
                 running = False
             # print(f"> {user_input}")
-            for s in self.super_graph.stream(
+            for s in self.meeting_chain.stream(
                     {
                         "messages": [
                             HumanMessage(
@@ -100,3 +102,8 @@ class Meeting:
     @staticmethod
     def join_graph(response: dict):
         return {"messages": [response["messages"][-1]]}
+
+    def get_chain(self):
+        if self.meeting_chain is None:
+            self.build_team()
+        return self.meeting_chain

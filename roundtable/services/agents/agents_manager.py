@@ -4,14 +4,15 @@ from typing import List, Annotated, Optional, Dict, Any
 
 from langchain import hub
 from langchain.agents import create_openai_tools_agent, AgentExecutor, create_react_agent
-from langchain_community.chat_models import ChatOllama
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.output_parsers.ernie_functions import JsonOutputFunctionsParser
+from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
 from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers.openai_functions import JsonOutputFunctionsParser
+# from langchain_core.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
 from langchain_core.tools import tool
+from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_experimental.utilities import PythonREPL
 from langchain_openai import ChatOpenAI
 
@@ -28,7 +29,7 @@ class AgentsManager:
         self.logger = Logger()
 
     @staticmethod
-    def create_agent(llm: ChatOpenAI | ChatOllama, tools: List, system_prompt: str):
+    def create_agent(llm: ChatOpenAI | OllamaFunctions, tools: List, system_prompt: str):
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -55,7 +56,8 @@ class AgentsManager:
         return {"messages": [HumanMessage(content=result["output"], name=name)]}
 
     @staticmethod
-    def create_team_supervisor(llm: ChatOpenAI | ChatOllama, system_prompt, members) -> RunnableSerializable[dict, Any]:
+    def create_team_supervisor(llm: ChatOpenAI | OllamaFunctions, system_prompt, members) -> RunnableSerializable[
+        dict, Any]:
         options = ["FINISH"] + members
         function_def = {
             "name": "route",
@@ -87,14 +89,16 @@ class AgentsManager:
         ).partial(options=str(options), team_members=", ".join(members))
         return (
                 prompt
-                | llm.bind(functions=[function_def], function_call="route")
+                | llm.bind(functions=[function_def], function_call={"name": "route"})
                 | JsonOutputFunctionsParser()
         )
 
     @staticmethod
-    def create_researcher_tool(researcher_max_results: int = RESEARCHER_MAX_RESULT) -> TavilySearchResults:
-        researcher_tool = TavilySearchResults(max_results=researcher_max_results)
-        return researcher_tool
+    @tool
+    def create_researcher_tool(search_query: str):
+        """Useful for when you need to do a search on the internet to find information that another tool can't find. be specific with your input."""
+        researcher_tool = DuckDuckGoSearchRun()
+        return researcher_tool.run(search_query)
 
     @staticmethod
     @tool

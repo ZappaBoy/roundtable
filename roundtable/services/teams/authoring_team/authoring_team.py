@@ -1,8 +1,8 @@
 import functools
 from typing import List
 
-from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
+from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 
@@ -13,7 +13,7 @@ from roundtable.shared.utils.logger import Logger
 
 class AuthoringTeam:
 
-    def __init__(self, llm: ChatOpenAI | ChatOllama):
+    def __init__(self, llm: ChatOpenAI | OllamaFunctions):
         self.logger = Logger()
         self.llm = llm
         self.authoring_chain = None

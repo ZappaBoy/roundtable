@@ -1,7 +1,7 @@
 import functools
 
-from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
+from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 
@@ -11,7 +11,7 @@ from roundtable.shared.utils.logger import Logger
 
 
 class ResearchTeam:
-    def __init__(self, llm: ChatOpenAI | ChatOllama):
+    def __init__(self, llm: ChatOpenAI | OllamaFunctions):
         self.logger = Logger()
         self.llm = llm
         self.research_chain = None
@@ -19,8 +19,8 @@ class ResearchTeam:
     def build_team(self):
         search_agent = AgentsManager.create_agent(
             self.llm,
-            [AgentsManager.create_researcher_tool()],
-            "You are a research assistant who can search for up-to-date info using the tavily search engine.",
+            [AgentsManager.create_researcher_tool],
+            "You are a research assistant who can search for up-to-date info using the DuckDuckGo search engine.",
         )
         search_node = functools.partial(AgentsManager.agent_node, agent=search_agent, name="Search")
 
