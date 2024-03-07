@@ -27,7 +27,6 @@ class Roundtable:
         if self.args.cli:
             meeting.start_meeting()
 
-
     @staticmethod
     def parse_args() -> Namespace:
         parser = argparse.ArgumentParser(description="This is a template repository to build Python CLI tool.")

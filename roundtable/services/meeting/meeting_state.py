@@ -9,4 +9,5 @@ class MeetingState(TypedDict):
     input: str
     chat_history: list[BaseMessage]
     agent_outcome: Union[AgentAction, AgentFinish, None]
+    return_direct: bool
     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
