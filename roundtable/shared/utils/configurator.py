@@ -10,15 +10,14 @@ from roundtable.shared.decorators.singleton import Singleton
 class Configurator:
     def __init__(self):
         self._settings = Settings()
-        if self._settings.environment == Environment.TESTING:
-            self._settings.log_level = LogLevel.DEBUG
+        if self.is_debug_enabled():
+            set_debug(True)
+            set_verbose(True)
 
     def is_production_environment(self) -> bool:
         return self._settings.environment == Environment.PRODUCTION
 
     def is_debug_enabled(self) -> bool:
-        set_debug(True)
-        set_verbose(True)
         return self._settings.log_level == LogLevel.DEBUG
 
     def get_settings(self) -> Settings:

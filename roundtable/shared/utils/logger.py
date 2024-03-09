@@ -13,11 +13,11 @@ class Logger:
 
     def set_log_level(self, log_level: LogLevel | int = LogLevel.INFO):
         if isinstance(log_level, int):
-            log_level = LogLevel(log_level)
+            log_level = LogLevel.from_value(log_level)
         if log_level == LogLevel.DISABLED:
             self.disable()
         else:
-            self.logger.setLevel(level=log_level.value)
+            self.logger.setLevel(level=log_level.get_value())
 
     @staticmethod
     def disable():

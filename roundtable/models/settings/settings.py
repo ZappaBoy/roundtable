@@ -1,4 +1,4 @@
-from pydantic.v1 import BaseSettings
+from pydantic.v1 import BaseSettings, validator
 
 from roundtable.models.log_level import LogLevel
 from roundtable.models.settings.environment import Environment
@@ -17,3 +17,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+    @validator("log_level", pre=True)
+    def parse_log_level(cls, value: str) -> LogLevel:
+        return LogLevel.from_string(value)

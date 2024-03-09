@@ -58,7 +58,7 @@ class Roundtable:
         if self.args.quiet:
             verbosity_level = LogLevel.DISABLED
         else:
-            if self.args.debug or self.args.verbose > LogLevel.DEBUG.value:
+            if self.args.debug or self.args.verbose > LogLevel.DEBUG.get_value():
                 verbosity_level = LogLevel.DEBUG
             else:
                 verbosity_level = self.args.verbose
