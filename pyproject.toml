@@ -20,6 +20,15 @@ langchainhub = "^0.1.15"
 openai = "^1.13.3"
 langchain-community = "^0.0.26"
 langchain-core = "^0.1.29"
+# Export the following envs before installing to enable HIPBLAS support for the llama-cpp-python package
+# (requires ROCm to be installed)
+# CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang
+# -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1030" FORCE_CMAKE=1
+llama-cpp-python = "^0.2.56"
+duckduckgo-search = "^5.0"
+chromadb = "^0.4.24"
+langchain-nomic = "^0.0.2"
+beautifulsoup4 = "^4.12.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"

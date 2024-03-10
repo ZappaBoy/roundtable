@@ -1,9 +1,11 @@
-import operator
-from typing import TypedDict, Annotated, Sequence
-
-from langchain_core.messages import BaseMessage
+from typing import TypedDict, Dict
 
 
 class MeetingState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    next: str
+    """
+    Represents the state of our graph.
+
+    Attributes:
+        keys: A dictionary where each key is a string.
+    """
+    keys: Dict[str, any]
