@@ -1,23 +1,25 @@
 import logging
 
 from roundtable.models.log_level import LogLevel
+from roundtable.shared.utils.configurator import Configurator
 
 
 class Logger:
     def __init__(self, log_level: LogLevel | int = LogLevel.INFO):
         self.log_level = log_level
-        self.logger = logging.getLogger("roundtable")
+        project_name = Configurator.instance().get_project_name()
+        self.logger = logging.getLogger(project_name)
         self.set_log_level(log_level)
         self.format = '%(levelname)-5s :: %(message)s'
         logging.basicConfig(format=self.format)
 
     def set_log_level(self, log_level: LogLevel | int = LogLevel.INFO):
         if isinstance(log_level, int):
-            log_level = LogLevel(log_level)
+            log_level = LogLevel.from_value(log_level)
         if log_level == LogLevel.DISABLED:
             self.disable()
         else:
-            self.logger.setLevel(level=log_level.value)
+            self.logger.setLevel(level=log_level.get_value())
 
     @staticmethod
     def disable():
