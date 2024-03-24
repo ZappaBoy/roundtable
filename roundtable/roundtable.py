@@ -6,7 +6,7 @@ __version__ = metadata.version(__package__ or __name__)
 
 from roundtable.gui.gui import GUI
 from roundtable.models.log_level import LogLevel
-from roundtable.services.team.team import Team
+from roundtable.services.discussion_room.discussion_room import DiscussionRoom
 from roundtable.shared.utils.logger import Logger
 
 
@@ -20,7 +20,7 @@ class Roundtable:
         self.check_args()
         self.logger.info(f"Running...")
         self.logger.debug(self.args)
-        team = Team()
+        team = DiscussionRoom()
         if self.args.gui:
             gui = GUI()
             gui.show()
