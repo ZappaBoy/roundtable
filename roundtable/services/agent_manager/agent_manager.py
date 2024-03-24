@@ -35,7 +35,8 @@ class AgentManager:
         return ChatAgent(config)
 
     @staticmethod
-    def create_task(agent_name: str, system_message: str, is_supervisor: bool = False, agent: ChatAgent = None) -> Task:
+    def create_task(agent_name: str, system_message: str, is_supervisor: bool = False, agent: ChatAgent = None,
+                    interactive: bool = True) -> Task:
         if agent is None:
             agent = AgentManager.create_agent()
         if is_supervisor:
@@ -44,6 +45,7 @@ class AgentManager:
         task = Task(
             agent,
             name=agent_name,
+            interactive=interactive,
             system_message=system_message,
             llm_delegate=is_supervisor,
             single_round=not is_supervisor,
@@ -51,6 +53,6 @@ class AgentManager:
         return task
 
     @staticmethod
-    def create_team(supervisor_task: Task, subordinate_tasks: List[Task]):
+    def create_team(supervisor_task: Task, subordinate_tasks: List[Task]) -> Task:
         supervisor_task.add_sub_task(subordinate_tasks)
         return supervisor_task

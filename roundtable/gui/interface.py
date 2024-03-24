@@ -1,5 +1,6 @@
 import streamlit as st
 
+from roundtable.services.team.team import Team
 from roundtable.shared.utils.logger import Logger
 
 
@@ -10,21 +11,26 @@ class Interface:
         self.subheader = 'Meeting room'
         self.input_message_placeholder = "Enter text here..."
         self.button_label = "Send"
+        self.team = Team(interactive=False).get_team()
 
     def build(self):
         st.title(self.title)
         st.subheader(self.subheader)
-        input_text = st.text_area(self.input_message_placeholder)
-        if st.button(self.button_label):
-            if input_text:
-                # TODO: Use async generator
+        initialized_response = self.team.init("How can I help you?")
+        st.write(initialized_response)
+
+        with st.form("user_chat_form", clear_on_submit=True):
+            input_text = st.text_input(label="Message", placeholder=self.input_message_placeholder, key="input_text")
+            submit_form = st.form_submit_button(self.button_label)
+            # TODO: Use async generator
+            if submit_form:
+                st.write(f"Message: {input_text}")
                 try:
-                    st.write(input_text)
+                    result = self.team.run(input_text)
+                    st.write(f"Response: {result}")
                 except Exception as e:
                     self.logger.error(e)
                     st.warning('Sorry, something goes wrong. Try with a different input')
-            else:
-                st.warning("Please write a message...")
 
 
 if __name__ == '__main__':
