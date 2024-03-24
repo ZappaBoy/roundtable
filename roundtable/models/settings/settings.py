@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     environment: Environment = Environment.DEVELOPMENT
     log_level: LogLevel = LogLevel.DEBUG
     llm_model: str = "ollama/mistral:7b-instruct-v0.2-q8_0"
+    llm_chat_length: int = 16_000
 
     class Config:
         env_file = ".env"

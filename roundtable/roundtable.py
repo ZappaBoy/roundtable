@@ -6,7 +6,7 @@ __version__ = metadata.version(__package__ or __name__)
 
 from roundtable.gui.gui import GUI
 from roundtable.models.log_level import LogLevel
-from roundtable.services.meeting.meeting import Meeting
+from roundtable.services.team.team import Meeting
 from roundtable.shared.utils.logger import Logger
 
 
@@ -25,7 +25,7 @@ class Roundtable:
             gui = GUI()
             gui.show()
         if self.args.cli:
-            meeting.start_meeting()
+            meeting.start()
 
     @staticmethod
     def parse_args() -> Namespace:

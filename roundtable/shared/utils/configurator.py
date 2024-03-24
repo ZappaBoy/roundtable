@@ -24,3 +24,6 @@ class Configurator:
 
     def get_llm_model(self) -> str:
         return self._settings.llm_model
+
+    def get_llm_chat_length(self) -> int:
+        return self._settings.llm_chat_length
