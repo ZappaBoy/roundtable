@@ -17,7 +17,7 @@ class AgentsManager:
 
     @staticmethod
     def create_agent(llm: OllamaFunctions, tools: Sequence[BaseTool], system_prompt: str) \
-            -> Runnable:
+            -> AgentExecutor:
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -33,12 +33,7 @@ class AgentsManager:
         # prompt.input_variables.append("tools")
         # prompt.input_variables.append("tool_names")
 
-        return create_react_agent(llm, tools, prompt)
-
-    @staticmethod
-    def create_agent_executor(llm: OllamaFunctions, tools: Sequence[BaseTool],
-                              system_prompt: str) -> AgentExecutor:
-        agent = AgentsManager.create_agent(llm, tools, system_prompt)
+        agent = create_react_agent(llm, tools, prompt)
         executor = AgentExecutor(agent=agent, tools=tools)
         return executor
 

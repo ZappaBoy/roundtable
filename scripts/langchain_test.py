@@ -117,7 +117,7 @@ prompt = ChatPromptTemplate.from_messages(
 
 supervisor_chain = (
         prompt
-        | llm.bind(functions=[function_def], function_call={"name": "route"})
+        | llm.bind_functions(functions=[function_def], function_call={"name": "route"})
         | JsonOutputFunctionsParser()
 )
 

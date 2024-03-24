@@ -74,18 +74,18 @@ class Meeting:
 
         supervisor_chain = (
                 prompt
-                | self.llm.bind(functions=[function_def], function_call={"name": "route"})
+                | self.llm.bind_functions(functions=[function_def], function_call="route")
                 | JsonOutputFunctionsParser()
         )
 
-        research_agent = AgentsManager.create_agent_executor(
+        research_agent = AgentsManager.create_agent(
             self.llm,
             [ToolsManager.get_web_search_tool()],
             "You are a web researcher."
         )
         research_node = functools.partial(AgentsManager.agent_node, agent=research_agent, name=RESEARCHER)
 
-        code_agent = AgentsManager.create_agent_executor(
+        code_agent = AgentsManager.create_agent(
             self.llm,
             [ToolsManager.get_code_executor_code()],
             "You may generate safe python code to analyze data and generate charts using matplotlib.",
