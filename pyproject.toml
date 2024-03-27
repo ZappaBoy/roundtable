@@ -11,7 +11,7 @@ packages = [{ include = "roundtable" }]
 python = ">=3.11,<3.12"
 pydantic = "^1.10.13"
 streamlit = "^1.31.1"
-langroid = "^0.1.218"
+pyautogen = "^0.2.20"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"

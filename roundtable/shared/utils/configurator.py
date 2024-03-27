@@ -1,5 +1,4 @@
-import langroid.utils.configuration as langroid_configuration
-
+from roundtable.models.discussion_room_config import DiscussionRoomConfig
 from roundtable.models.log_level import LogLevel
 from roundtable.models.settings.environment import Environment
 from roundtable.models.settings.settings import Settings
@@ -11,9 +10,7 @@ class Configurator:
     def __init__(self):
         self._settings = Settings()
         if self.is_debug_enabled():
-            langroid_configuration.set_global(
-                langroid_configuration.Settings(debug=True)
-            )
+            print("debug enabled")
 
     def get_project_name(self) -> str:
         return self._settings.title
@@ -27,8 +24,10 @@ class Configurator:
     def get_settings(self) -> Settings:
         return self._settings
 
-    def get_llm_model(self) -> str:
-        return self._settings.llm_model
-
-    def get_llm_chat_length(self) -> int:
-        return self._settings.llm_chat_length
+    def get_discussion_room_config(self) -> DiscussionRoomConfig:
+        return DiscussionRoomConfig(
+            base_url=self._settings.ollama_base_url,
+            api_key=self._settings.ollama_api_key,
+            llm_model_name=self._settings.llm_model,
+            code_model_name=self._settings.code_model
+        )

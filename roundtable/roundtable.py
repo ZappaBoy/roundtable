@@ -20,12 +20,12 @@ class Roundtable:
         self.check_args()
         self.logger.info(f"Running...")
         self.logger.debug(self.args)
-        team = DiscussionRoom()
         if self.args.gui:
             gui = GUI()
             gui.show()
         if self.args.cli:
-            team.start()
+            discussion_room = DiscussionRoom()
+            discussion_room.start()
 
     @staticmethod
     def parse_args() -> Namespace:

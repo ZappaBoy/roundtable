@@ -10,8 +10,10 @@ class Settings(BaseSettings):
     version: str = "0.1.0"
     environment: Environment = Environment.DEVELOPMENT
     log_level: LogLevel = LogLevel.DEBUG
-    llm_model: str = "ollama/mistral:7b-instruct-v0.2-q8_0"
-    llm_chat_length: int = 16_000
+    ollama_base_url: str = "http://localhost:11434/v1"
+    ollama_api_key: str = "public_access"
+    llm_model: str = "mistral:latest"
+    code_model: str = "codellama:latest"
 
     class Config:
         env_file = ".env"
