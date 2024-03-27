@@ -35,12 +35,23 @@ class AgentManager:
         return ChatAgent(config)
 
     @staticmethod
-    def create_task(agent_name: str, system_message: str, is_supervisor: bool = False, agent: ChatAgent = None,
-                    interactive: bool = True) -> Task:
+    def create_task(
+            agent_name: str,
+            system_message: str,
+            user_message: str = "Can you help me with some questions?",
+            is_supervisor: bool = False,
+            agent: ChatAgent = None,
+            interactive: bool = True,
+            tools: List = None,
+    ) -> Task:
         if agent is None:
             agent = AgentManager.create_agent()
         if is_supervisor:
             agent.enable_message(RecipientTool)
+
+        if tools is not None:
+            for tool in tools:
+                agent.enable_message(tool)
 
         task = Task(
             agent,
@@ -49,7 +60,9 @@ class AgentManager:
             system_message=system_message,
             llm_delegate=is_supervisor,
             single_round=not is_supervisor,
+            user_message=user_message,
         )
+
         return task
 
     @staticmethod

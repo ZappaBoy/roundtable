@@ -1,3 +1,4 @@
+import langroid.utils.configuration as langroid_configuration
 
 from roundtable.models.log_level import LogLevel
 from roundtable.models.settings.environment import Environment
@@ -9,6 +10,10 @@ from roundtable.shared.decorators.singleton import Singleton
 class Configurator:
     def __init__(self):
         self._settings = Settings()
+        if self.is_debug_enabled():
+            langroid_configuration.set_global(
+                langroid_configuration.Settings(debug=True)
+            )
 
     def get_project_name(self) -> str:
         return self._settings.title
