@@ -51,26 +51,30 @@ class DiscussionRoom:
         llm_config = self.get_llm_config(self.config.llm_model_name)
         code_config = self.get_llm_config(self.config.code_model_name)
 
+        code_execution_config = {}
+        if self.config.code_execution_enabled:
+            code_execution_config = {"work_dir": "generated_code", "use_docker": False}
+
         user_proxy = user_proxy_agent(
             name=USER_PROXY,
             max_consecutive_auto_reply=10,
             llm_config=llm_config,
-            system_message=REPLY_TERMINATE_ON_SUCCESS
-            # code_execution_config={"work_dir": "user", "use_docker": False},
+            system_message=REPLY_TERMINATE_ON_SUCCESS,
+            code_execution_config=code_execution_config
         )
 
         coder = assistant_agent(
             name=CODER,
             llm_config=code_config,
             system_message=REPLY_TERMINATE_ON_SUCCESS,
-            # code_execution_config={"work_dir": "coder", "use_docker": False}
+            code_execution_config=code_execution_config
         )
 
         assistant = assistant_agent(
             name=ASSISTANT,
             llm_config=llm_config,
-            system_message=REPLY_TERMINATE_ON_SUCCESS
-            # code_execution_config={"work_dir": "assistant", "use_docker": False}
+            system_message=REPLY_TERMINATE_ON_SUCCESS,
+            code_execution_config=code_execution_config
         )
 
         group_chat = GroupChat(agents=[user_proxy, coder, assistant], messages=[], max_round=12)

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ollama_api_key: str = "public_access"
     llm_model: str = "mistral:latest"
     code_model: str = "codellama:latest"
+    code_execution: bool = False
 
     class Config:
         env_file = ".env"

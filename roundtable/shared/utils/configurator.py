@@ -10,7 +10,7 @@ class Configurator:
     def __init__(self):
         self._settings = Settings()
         if self.is_debug_enabled():
-            print("debug enabled")
+            print("Debug enabled")
 
     def get_project_name(self) -> str:
         return self._settings.title
@@ -29,5 +29,6 @@ class Configurator:
             base_url=self._settings.ollama_base_url,
             api_key=self._settings.ollama_api_key,
             llm_model_name=self._settings.llm_model,
-            code_model_name=self._settings.code_model
+            code_model_name=self._settings.code_model,
+            code_execution_enabled=self._settings.code_execution,
         )
