@@ -1,9 +1,10 @@
 from textwrap import dedent
+from typing import Callable
 
 from autogen import UserProxyAgent, ConversableAgent, AssistantAgent, GroupChat, GroupChatManager
 
 from roundtable.models.discussion_room_config import DiscussionRoomConfig
-from roundtable.services.discussion_room.trackable_agent import GUIUserProxyAgent, GUIAssistantAgent
+from roundtable.services.discussion_room.trackable_agent import CallbackGroupChatManager
 from roundtable.shared.utils.configurator import Configurator
 from roundtable.shared.utils.logger import Logger
 
@@ -24,9 +25,9 @@ REPLY_TERMINATE_ON_SUCCESS = dedent(f"""
 
 
 class DiscussionRoom:
-    def __init__(self, gui: bool = False):
+    def __init__(self, callback: Callable = None):
         self.logger = Logger()
-        self.gui = gui
+        self.callback: Callable = callback
         self.discussion = None
         self.manager = None
         configurator = Configurator.instance()
@@ -37,12 +38,10 @@ class DiscussionRoom:
         return {"config_list": llm_config}
 
     def build_discussion_room(self):
-        if self.gui:
-            user_proxy_agent = GUIUserProxyAgent
-            assistant_agent = GUIAssistantAgent
+        if self.callback:
+            group_chat_manager = CallbackGroupChatManager
         else:
-            user_proxy_agent = UserProxyAgent
-            assistant_agent = AssistantAgent
+            group_chat_manager = GroupChatManager
 
         llm_config = self.get_llm_config(self.config.llm_model_name)
         code_config = self.get_llm_config(self.config.code_model_name)
@@ -51,7 +50,7 @@ class DiscussionRoom:
         if self.config.use_code_execution:
             code_execution_config = {"work_dir": "generated_code", "use_docker": self.config.execute_code_in_docker}
 
-        admin = user_proxy_agent(
+        admin = UserProxyAgent(
             name=ADMIN,
             max_consecutive_auto_reply=10,
             llm_config=llm_config,
@@ -62,7 +61,7 @@ class DiscussionRoom:
                 """),
         )
 
-        supervisor = assistant_agent(
+        supervisor = AssistantAgent(
             name=SUPERVISOR,
             llm_config=llm_config,
             system_message=dedent(f"""
@@ -75,7 +74,7 @@ class DiscussionRoom:
                 """),
         )
 
-        assistant = assistant_agent(
+        assistant = AssistantAgent(
             name=ASSISTANT,
             llm_config=llm_config,
             system_message=dedent(f"""
@@ -84,7 +83,7 @@ class DiscussionRoom:
                 """),
         )
 
-        engineer = assistant_agent(
+        engineer = AssistantAgent(
             name=ENGINEER,
             llm_config=code_config,
             system_message=dedent(f"""
@@ -101,7 +100,7 @@ class DiscussionRoom:
                 """),
         )
 
-        executor = assistant_agent(
+        executor = AssistantAgent(
             name=EXECUTOR,
             llm_config=code_config,
             code_execution_config=code_execution_config,
@@ -112,7 +111,7 @@ class DiscussionRoom:
                 """),
         )
 
-        critic = assistant_agent(
+        critic = AssistantAgent(
             name=CRITIC,
             llm_config=llm_config,
             human_input_mode=NEVER,
@@ -122,13 +121,17 @@ class DiscussionRoom:
                 """),
         )
 
-        group_chat = GroupChat(messages=[], max_round=20,
-                               agents=[admin, supervisor, assistant, engineer, executor, critic])
-        self.manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config,
-                                        human_input_mode=TERMINATE,
-                                        is_termination_msg=DiscussionRoom.is_termination_message)
-        self.discussion = admin
+        group_chat = GroupChat(messages=[], max_round=20, admin_name=ADMIN,
+                               speaker_selection_method="round_robin",
+                               agents=[admin, supervisor, critic, engineer, executor, assistant])
 
+        self.manager = group_chat_manager(groupchat=group_chat, llm_config=llm_config,
+                                          human_input_mode=TERMINATE,
+                                          is_termination_msg=DiscussionRoom.is_termination_message)
+        if self.callback:
+            self.manager.set_callback(self.callback)
+
+        self.discussion = admin
 
     @staticmethod
     def is_termination_message(message: dict) -> bool:

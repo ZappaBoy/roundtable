@@ -1,22 +1,17 @@
-import streamlit as st
+from typing import Callable
 
-from autogen import AssistantAgent, UserProxyAgent
-
-
-def show_message(sender: str, message: str):
-    with st.chat_message(sender):
-        st.markdown(message)
+from autogen import GroupChatManager
 
 
-class GUIAssistantAgent(AssistantAgent):
+class CallbackGroupChatManager(GroupChatManager):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.callback = None
+
+    def set_callback(self, callback: Callable):
+        self.callback = callback
+
     def _process_received_message(self, message, sender, silent):
-        print(f"GUIAssistantAgent: {message}")
-        show_message(sender.name, message['content'])
-        return super()._process_received_message(message, sender, silent)
-
-
-class GUIUserProxyAgent(UserProxyAgent):
-    def _process_received_message(self, message, sender, silent):
-        print(f"GUIUserProxyAgent: {message}")
-        show_message(sender.name, message['content'])
+        self.callback(sender.name, message)
         return super()._process_received_message(message, sender, silent)
