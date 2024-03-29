@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     llm_model: str = "mistral:latest"
     code_model: str = "codellama:latest"
     code_execution: bool = False
+    docker_code_execution: bool = False
 
     class Config:
         env_file = ".env"

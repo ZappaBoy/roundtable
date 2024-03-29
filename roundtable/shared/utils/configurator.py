@@ -30,5 +30,6 @@ class Configurator:
             api_key=self._settings.ollama_api_key,
             llm_model_name=self._settings.llm_model,
             code_model_name=self._settings.code_model,
-            code_execution_enabled=self._settings.code_execution,
+            use_code_execution=self._settings.code_execution,
+            execute_code_in_docker=self._settings.docker_code_execution,
         )

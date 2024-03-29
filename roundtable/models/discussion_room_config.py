@@ -6,4 +6,5 @@ class DiscussionRoomConfig(CustomBaseModel):
     api_key: str
     llm_model_name: str
     code_model_name: str
-    code_execution_enabled: bool
+    use_code_execution: bool
+    execute_code_in_docker: bool

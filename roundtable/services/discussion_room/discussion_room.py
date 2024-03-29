@@ -7,21 +7,17 @@ from roundtable.services.discussion_room.trackable_agent import GUIUserProxyAgen
 from roundtable.shared.utils.configurator import Configurator
 from roundtable.shared.utils.logger import Logger
 
-# TODO
-# RESEARCHER = "Researcher"
-# WEB_SCRAPER = "Web Scraper"
-CODER = "Coder"
-# DATA_ANALYST = "Data Analyst"
-#
-# RESEARCH_TEAM = "Research Team"
-# CODING_TEAM = "Coding Team"
-# TEAMS = [RESEARCH_TEAM, CODING_TEAM]
-
-USER_PROXY = "UserProxy"
+ADMIN = "Admin"
+SUPERVISOR = "Supervisor"
 ASSISTANT = "Assistant"
+ENGINEER = "Engineer"
+EXECUTOR = "Executor"
+CRITIC = "Critic"
 
 TERMINATE = "TERMINATE"
+NEVER = "NEVER"
 CONTINUE = "CONTINUE"
+
 REPLY_TERMINATE_ON_SUCCESS = dedent(f"""
     Reply {TERMINATE} if the task has been solved at full satisfaction.
     Otherwise, reply {CONTINUE}, or the reason why the task is not solved yet.""")
@@ -52,36 +48,87 @@ class DiscussionRoom:
         code_config = self.get_llm_config(self.config.code_model_name)
 
         code_execution_config = {}
-        if self.config.code_execution_enabled:
-            code_execution_config = {"work_dir": "generated_code", "use_docker": False}
+        if self.config.use_code_execution:
+            code_execution_config = {"work_dir": "generated_code", "use_docker": self.config.execute_code_in_docker}
 
-        user_proxy = user_proxy_agent(
-            name=USER_PROXY,
+        admin = user_proxy_agent(
+            name=ADMIN,
             max_consecutive_auto_reply=10,
             llm_config=llm_config,
-            system_message=REPLY_TERMINATE_ON_SUCCESS,
-            code_execution_config=code_execution_config
+            system_message=dedent(f"""
+                {ADMIN}. Interact with the {SUPERVISOR} to discuss the plan. Plan execution needs to be approved 
+                by this {ADMIN}.
+                {REPLY_TERMINATE_ON_SUCCESS}
+                """),
         )
 
-        coder = assistant_agent(
-            name=CODER,
-            llm_config=code_config,
-            system_message=REPLY_TERMINATE_ON_SUCCESS,
-            code_execution_config=code_execution_config
+        supervisor = assistant_agent(
+            name=SUPERVISOR,
+            llm_config=llm_config,
+            system_message=dedent(f"""
+                {SUPERVISOR}. Suggest a plan. Revise the plan based on feedback from {ADMIN} and {CRITIC}, until 
+                {ADMIN} approval. The plan may involve the {ENGINEER} who can write code, the {EXECUTOR} that 
+                run the code and the {ASSISTANT} that analyze and elaborate the output of the code and conversation. 
+                Explain the plan first. Be clear which step is performed by the {ENGINEER} and which step 
+                is performed by the {ASSISTANT}.
+                If the {ASSISTANT} gives the correct output say {TERMINATE} and write the correct answer.
+                """),
         )
 
         assistant = assistant_agent(
             name=ASSISTANT,
             llm_config=llm_config,
-            system_message=REPLY_TERMINATE_ON_SUCCESS,
-            code_execution_config=code_execution_config
+            system_message=dedent(f"""
+                {ASSISTANT}. You follow an approved plan. You are able to analyze and elaborate the output of the 
+                {EXECUTOR} and the entire conversation to make simply understandable. You don't write code.
+                """),
         )
 
-        group_chat = GroupChat(agents=[user_proxy, coder, assistant], messages=[], max_round=12)
+        engineer = assistant_agent(
+            name=ENGINEER,
+            llm_config=code_config,
+            system_message=dedent(f"""
+                {ENGINEER}. You follow an approved plan. You write python/shell code to solve tasks. 
+                Wrap the code in a code block that specifies the script type. The user can't modify your code. So do 
+                not suggest incomplete code which requires others to modify. Don't use a code block if it's not 
+                intended to be executed by the executor.
+                Don't include multiple code blocks in one response. Do not ask others to copy and paste the result. 
+                Check the execution result returned by the executor.
+                If the result indicates there is an error, fix the error and output the code again. Suggest the full 
+                code instead of partial code or code changes. If the error can't be fixed or if the task is not solved
+                even after the code is executed successfully, analyze the problem, revisit your assumption, collect 
+                additional info you need, and think of a different approach to try.
+                """),
+        )
+
+        executor = assistant_agent(
+            name=EXECUTOR,
+            llm_config=code_config,
+            code_execution_config=code_execution_config,
+            human_input_mode=NEVER,
+            system_message=dedent(f"""
+                {EXECUTOR}. You must execute the code written by the {ENGINEER} and report the result. Install all the 
+                required dependencies before running the code. If the code execution fails, report the error message.
+                """),
+        )
+
+        critic = assistant_agent(
+            name=CRITIC,
+            llm_config=llm_config,
+            human_input_mode=NEVER,
+            system_message=dedent(f"""
+                {CRITIC}. Double check plan, claims, code from other agents and provide feedback. Check whether the plan 
+                includes adding verifiable info such as source URL.
+                """),
+        )
+
+        group_chat = GroupChat(messages=[], max_round=20,
+                               agents=[admin, supervisor, assistant, engineer, executor, critic])
         self.manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config,
                                         human_input_mode=TERMINATE,
                                         is_termination_msg=DiscussionRoom.is_termination_message)
-        self.discussion = user_proxy
+        self.discussion = admin
+
 
     @staticmethod
     def is_termination_message(message: dict) -> bool:
