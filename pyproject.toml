@@ -11,7 +11,7 @@ packages = [{ include = "roundtable" }]
 python = ">=3.11,<3.12"
 pydantic = "^1.10.13"
 streamlit = "^1.31.1"
-pyautogen = "^0.2.20"
+pyautogen = { extras = ["retrievechat"], version = "^0.2.27" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"

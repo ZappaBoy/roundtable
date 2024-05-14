@@ -1,7 +1,8 @@
 .idea
 logs
 generated_code
-
+assets
+tmp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

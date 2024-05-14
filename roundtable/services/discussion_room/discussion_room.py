@@ -1,7 +1,9 @@
+import os
 from textwrap import dedent
 from typing import Callable
 
-from autogen import UserProxyAgent, ConversableAgent, AssistantAgent, GroupChat, GroupChatManager
+from autogen import AssistantAgent, GroupChat, GroupChatManager
+from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
 
 from roundtable.models.discussion_room_config import DiscussionRoomConfig
 from roundtable.services.discussion_room.trackable_agent import CallbackGroupChatManager
@@ -10,10 +12,11 @@ from roundtable.shared.utils.logger import Logger
 
 ADMIN = "Admin"
 SUPERVISOR = "Supervisor"
-ASSISTANT = "Assistant"
+CRITIC = "Critic"
 ENGINEER = "Engineer"
 EXECUTOR = "Executor"
-CRITIC = "Critic"
+ASSISTANT = "Assistant"
+RETRIEVE_ASSISTANT = "RetrieveAssistant"
 
 TERMINATE = "TERMINATE"
 NEVER = "NEVER"
@@ -50,7 +53,7 @@ class DiscussionRoom:
         if self.config.use_code_execution:
             code_execution_config = {"work_dir": "generated_code", "use_docker": self.config.execute_code_in_docker}
 
-        admin = UserProxyAgent(
+        admin = RetrieveUserProxyAgent(
             name=ADMIN,
             max_consecutive_auto_reply=10,
             llm_config=llm_config,
@@ -59,6 +62,20 @@ class DiscussionRoom:
                 by this {ADMIN}.
                 {REPLY_TERMINATE_ON_SUCCESS}
                 """),
+            retrieve_config={
+                "task": "default",
+                "docs_path": [
+                    "https://raw.githubusercontent.com/lucafulgenzi/lucafulgenzi/main/README.md",
+                    "https://raw.githubusercontent.com/ZappaBoy/ZappaBoy/main/README.md",
+                    os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets"),
+                ],
+                # "custom_text_types": ["non-existent-type"],
+                "chunk_token_size": 2000,
+                "model": self.config.llm_model_name,
+                "vector_db": "chroma",
+                "overwrite": False,
+                "get_or_create": True,
+            },
         )
 
         supervisor = AssistantAgent(
@@ -70,44 +87,7 @@ class DiscussionRoom:
                 run the code and the {ASSISTANT} that analyze and elaborate the output of the code and conversation. 
                 Explain the plan first. Be clear which step is performed by the {ENGINEER} and which step 
                 is performed by the {ASSISTANT}.
-                If the {ASSISTANT} gives the correct output say {TERMINATE} and write the correct answer.
-                """),
-        )
-
-        assistant = AssistantAgent(
-            name=ASSISTANT,
-            llm_config=llm_config,
-            system_message=dedent(f"""
-                {ASSISTANT}. You follow an approved plan. You are able to analyze and elaborate the output of the 
-                {EXECUTOR} and the entire conversation to make simply understandable. You don't write code.
-                """),
-        )
-
-        engineer = AssistantAgent(
-            name=ENGINEER,
-            llm_config=code_config,
-            system_message=dedent(f"""
-                {ENGINEER}. You follow an approved plan. You write python/shell code to solve tasks. 
-                Wrap the code in a code block that specifies the script type. The user can't modify your code. So do 
-                not suggest incomplete code which requires others to modify. Don't use a code block if it's not 
-                intended to be executed by the executor.
-                Don't include multiple code blocks in one response. Do not ask others to copy and paste the result. 
-                Check the execution result returned by the executor.
-                If the result indicates there is an error, fix the error and output the code again. Suggest the full 
-                code instead of partial code or code changes. If the error can't be fixed or if the task is not solved
-                even after the code is executed successfully, analyze the problem, revisit your assumption, collect 
-                additional info you need, and think of a different approach to try.
-                """),
-        )
-
-        executor = AssistantAgent(
-            name=EXECUTOR,
-            llm_config=code_config,
-            code_execution_config=code_execution_config,
-            human_input_mode=NEVER,
-            system_message=dedent(f"""
-                {EXECUTOR}. You must execute the code written by the {ENGINEER} and report the result. Install all the 
-                required dependencies before running the code. If the code execution fails, report the error message.
+                {REPLY_TERMINATE_ON_SUCCESS}
                 """),
         )
 
@@ -118,6 +98,52 @@ class DiscussionRoom:
             system_message=dedent(f"""
                 {CRITIC}. Double check plan, claims, code from other agents and provide feedback. Check whether the plan 
                 includes adding verifiable info such as source URL.
+                """),
+        )
+
+        engineer = AssistantAgent(
+            name=ENGINEER,
+            llm_config=code_config,
+            system_message=dedent(f"""
+                {ENGINEER}. You follow an approved plan. You write python/shell code to solve tasks.
+                Wrap the code in a code block that specifies the script type. The user can't modify your code. So do 
+                not suggest incomplete code which requires others to modify. Don't use a code block if it's not 
+                intended to be executed by the executor.
+                Don't include multiple code blocks in one response. Do not ask others to copy and paste the result. 
+                Check the execution result returned by the executor.
+                If the result indicates there is an error, fix the error and output the code again. Suggest the full 
+                code instead of partial code or code changes. If the error can't be fixed or if the task is not solved
+                even after the code is executed successfully, analyze the problem, revisit your assumption, collect 
+                additional info you need, and think of a different approach to try.
+                If you think that the task does not require code, answer with "NO CODE PROVIDED".
+                """),
+        )
+
+        executor = AssistantAgent(
+            name=EXECUTOR,
+            llm_config=code_config,
+            code_execution_config=code_execution_config,
+            human_input_mode=NEVER,
+            system_message=dedent(f"""
+                {EXECUTOR}. If the {ENGINEER} provide code, you must execute the code written and report the result. 
+                Install all the required dependencies before running the code. If the code execution fails, report the 
+                error message.
+                If the {ENGINEER} DO NOT provide code answer with "NO CODE EXECUTED".
+                """),
+        )
+
+        assistant = AssistantAgent(
+            name=ASSISTANT,
+            llm_config=llm_config,
+            system_message=dedent(f"""
+                {ASSISTANT}. You follow an approved plan. You are able to analyze and elaborate the output of the 
+                {EXECUTOR} and the entire conversation to make simply understandable. You don't write code.
+                Provide a clear and concise answer to the {ADMIN} based on the conversation considering the output of 
+                the {EXECUTOR}, the {SUPERVISOR} and the {CRITIC}. 
+                If someone provide a useless output ignore it.
+                If someone provide an output that you cannot understand ignore it. 
+                Focus only on the useful output and provide a correct answer.
+                {REPLY_TERMINATE_ON_SUCCESS}
                 """),
         )
 
@@ -135,7 +161,9 @@ class DiscussionRoom:
 
     @staticmethod
     def is_termination_message(message: dict) -> bool:
-        return message.get("content", "").rstrip().endswith(TERMINATE)
+        raw_content = message.get("content", "")
+        content = ''.join(letter for letter in raw_content if letter.isalnum())
+        return content.rstrip().endswith(TERMINATE)
 
     def start(self):
         self.logger.info("Meeting started")
@@ -147,11 +175,11 @@ class DiscussionRoom:
             self.logger.error(e)
             print('Sorry, something goes wrong. Try with a different input')
 
-    def get_discussion(self) -> tuple[ConversableAgent, GroupChatManager]:
+    def get_discussion(self) -> tuple[RetrieveUserProxyAgent, GroupChatManager]:
         if self.discussion is None:
             self.build_discussion_room()
         return self.discussion, self.manager
 
     def discuss(self, message: str):
         discussion, manager = self.get_discussion()
-        return discussion.initiate_chat(manager, message=message)
+        return discussion.initiate_chat(manager, message=discussion.message_generator, problem=message)
