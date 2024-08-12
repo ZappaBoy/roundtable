@@ -10,7 +10,7 @@ packages = [{ include = "roundtable" }]
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 pydantic = "^1.10.13"
-streamlit = "^1.31.1"
+streamlit = "^1.37.0"
 pyautogen = { extras = ["retrievechat"], version = "^0.2.27" }
 
 [tool.poetry.group.dev.dependencies]
